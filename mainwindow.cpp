@@ -9,6 +9,11 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QTimer>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QTime>
+#include <QCoreApplication>
+#include <QProgressDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -155,6 +160,9 @@ MainWindow::MainWindow(QWidget *parent) :
     {//-------------------------------------------------------------------------------------------------------
       QString date=QDate::currentDate().toString();
       QString time=QTime::currentTime().toString() ;
+        ui->timeEdit->setDisplayFormat("hh:mm:ss");
+        ui->dateEdit->setDisplayFormat("yyyy-MM-dd");
+        ui->dateEdit->setCalendarPopup(true);
         ui->dateTimeEdit->setDisplayFormat("yyyy-MM-dd hh:mm:ss");//显示的格式
         ui->dateTimeEdit->setDate(QDate::currentDate());
         ui->dateTimeEdit->setTime(QTime::currentTime());
@@ -166,7 +174,48 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->tabWidget->setCurrentIndex(2);//显示为当前标签页
     }//-------------------------------------------------------------------------------------------------------
 
+    //6.QGraphicsView 暂时也不知道干嘛的
+    {//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        QGraphicsScene *scene = new QGraphicsScene;
+        scene->setSceneRect(-300,-300,600,600);
+        scene->setItemIndexMethod(QGraphicsScene::NoIndex);
+        QPixmap pixmap(":/1.jpg");
+        pixmap = pixmap.scaledToWidth(200);
+        QGraphicsPixmapItem *item1 = scene->addPixmap(pixmap);
 
+        ui->view->setScene(scene);
+        ui->view->setRenderHint(QPainter::Antialiasing);
+        ui->view->setCacheMode(QGraphicsView::CacheBackground);
+        ui->view->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
+        ui->view->setDragMode(QGraphicsView::ScrollHandDrag);
+        ui->view->resize(400,300);
+        ui->tabWidget->setCurrentIndex(3);//显示为当前标签页
+
+    }//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     //7.progressDialog
+    {//=============================================================================
+
+        ui->tabWidget->setCurrentIndex(4);//显示为当前标签页
+    }//==============================================================================
+    //8.1数码管
+    {//========================================
+        //直接使用的ui中的信号连接
+     ui->tabWidget->setCurrentIndex(5);//显示为当前标签页
+    }//========================================
+
+    //8.2数码管，代码实现
+    {//========================================
+        //直接使用的ui中的信号连接
+
+     ui->tabWidget->setCurrentIndex(6);//显示为当前标签页
+    }//========================================
+
+    //9.日历按键显示和影藏
+    {//========================================
+        //直接使用的ui中的信号连接
+     ui->calendarWidget->hide();
+     ui->tabWidget->setCurrentIndex(7);//显示为当前标签页
+    }//========================================
 }
 
 MainWindow::~MainWindow()
@@ -191,6 +240,7 @@ void MainWindow::timeoutslot()//date 3/////
         time = time.addSecs(1);
         ui->dateTimeEdit->setDate(date);
         ui->dateTimeEdit->setTime(time);
+        ui->timeEdit->setTime(time);
 }
 
 
@@ -211,3 +261,72 @@ void MainWindow::on_addtabbutton_clicked()//增加标签页
 }
 
 
+
+void MainWindow::on_btnProgressBar_clicked()//7.QProgressDialog基本模型
+{
+    int num=10;
+    ui->progressBar->setRange(0,10);
+    for(int i=1;i<=num;i++)
+    {
+        ui->progressBar->setValue(i);
+        Delay_MSec(50);
+        //sleep(1);
+    }
+}
+
+
+void MainWindow::on_btnProgressDialog_clicked()//7.QProgressDialog，重生成模型
+{
+    int num=10;
+    QProgressDialog *progressDialog = new QProgressDialog(this);
+    QFont font("ZYSong18030",12);
+    progressDialog->setFont(font);
+    progressDialog->setWindowModality(Qt::WindowModal);
+    progressDialog->setMinimumDuration(5);
+    progressDialog->setWindowTitle("Please Waiting");
+    progressDialog->setLabelText(tr("Copying..."));
+    progressDialog->setCancelButtonText(tr("Cancel"));
+
+    progressDialog->setRange(0,num);
+    for(int i=1;i<=num;i++)
+    {
+        progressDialog->setValue(i);
+        qApp->processEvents();//这里的事件怎么用？最后使用了延时进行代替
+        Delay_MSec(1000);
+        //sleep(1);
+        if(progressDialog->wasCanceled())
+            return;
+    }
+}
+
+void MainWindow::Delay_MSec(unsigned int msec)//7.QProgressDialog，延时函数秒级，研究下
+{
+    QTime _Timer = QTime::currentTime().addMSecs(msec);
+
+    while( QTime::currentTime() < _Timer )
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
+void MainWindow::on_spinBox_2_valueChanged(int arg1)
+{
+    ui->lcdNumber_2->display(arg1);//该控件能设置的最大值为99，所以显示为99
+}
+
+void MainWindow::on_lineEdit_2_textChanged(const QString &arg1)
+{
+    ui->lcdNumber_2->display(QString::number(ui->lineEdit_2->text().toInt()));
+}
+
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    ui->calendarWidget->show();
+}
+
+void MainWindow::on_calendarWidget_clicked(const QDate &date)
+{
+    ui->dateEdit_2->setDate(ui->calendarWidget->selectedDate());
+    ui->calendarWidget->hide();
+}
